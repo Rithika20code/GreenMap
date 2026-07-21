@@ -1,0 +1,520 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Digital Waste Mapping Platform API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: reports
+    description: Waste report operations
+  - name: recycling-centers
+    description: Recycling center operations
+  - name: announcements
+    description: Clean-up drive announcements
+  - name: tips
+    description: Recycling tips
+  - name: stats
+    description: Statistics and analytics
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /reports:
+    get:
+      operationId: getReports
+      tags: [reports]
+      summary: List all waste reports
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [overflowing_bin, illegal_dumping, litter, hazardous, other]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, resolved]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of waste reports
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reports:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WasteReport"
+                  total:
+                    type: integer
+                required: [reports, total]
+    post:
+      operationId: createReport
+      tags: [reports]
+      summary: Submit a new waste report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReportInput"
+      responses:
+        "201":
+          description: Report created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WasteReport"
+
+  /reports/{id}:
+    get:
+      operationId: getReport
+      tags: [reports]
+      summary: Get a specific waste report
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Waste report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WasteReport"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateReportStatus
+      tags: [reports]
+      summary: Update report status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateReportStatusInput"
+      responses:
+        "200":
+          description: Updated report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WasteReport"
+
+  /reports/hotspots:
+    get:
+      operationId: getHotspots
+      tags: [reports]
+      summary: Get waste hotspot clusters
+      responses:
+        "200":
+          description: Hotspot data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hotspots:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Hotspot"
+                required: [hotspots]
+
+  /recycling-centers:
+    get:
+      operationId: getRecyclingCenters
+      tags: [recycling-centers]
+      summary: List all recycling centers
+      responses:
+        "200":
+          description: List of recycling centers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  centers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RecyclingCenter"
+                required: [centers]
+
+  /announcements:
+    get:
+      operationId: getAnnouncements
+      tags: [announcements]
+      summary: List clean-up drive announcements
+      responses:
+        "200":
+          description: List of announcements
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcements:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Announcement"
+                required: [announcements]
+    post:
+      operationId: createAnnouncement
+      tags: [announcements]
+      summary: Create a clean-up drive announcement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAnnouncementInput"
+      responses:
+        "201":
+          description: Announcement created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+
+  /tips:
+    get:
+      operationId: getRecyclingTips
+      tags: [tips]
+      summary: List recycling tips
+      responses:
+        "200":
+          description: List of recycling tips
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tips:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RecyclingTip"
+                required: [tips]
+
+  /stats/summary:
+    get:
+      operationId: getStatsSummary
+      tags: [stats]
+      summary: Get platform statistics summary
+      responses:
+        "200":
+          description: Stats summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsSummary"
+
+  /stats/by-category:
+    get:
+      operationId: getStatsByCategory
+      tags: [stats]
+      summary: Get reports grouped by category
+      responses:
+        "200":
+          description: Stats by category
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CategoryStat"
+                required: [data]
+
+  /stats/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [stats]
+      summary: Get recent community activity feed
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activities:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ActivityItem"
+                required: [activities]
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    WasteReport:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [overflowing_bin, illegal_dumping, litter, hazardous, other]
+        status:
+          type: string
+          enum: [pending, in_progress, resolved]
+        latitude:
+          type: number
+        longitude:
+          type: number
+        address:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        reporterName:
+          type: string
+        upvotes:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, title, description, category, status, latitude, longitude, address, reporterName, upvotes, createdAt, updatedAt]
+
+    CreateReportInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [overflowing_bin, illegal_dumping, litter, hazardous, other]
+        latitude:
+          type: number
+        longitude:
+          type: number
+        address:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        reporterName:
+          type: string
+      required: [title, description, category, latitude, longitude, address, reporterName]
+
+    UpdateReportStatusInput:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, in_progress, resolved]
+      required: [status]
+
+    Hotspot:
+      type: object
+      properties:
+        latitude:
+          type: number
+        longitude:
+          type: number
+        count:
+          type: integer
+        severity:
+          type: string
+          enum: [low, medium, high]
+        categories:
+          type: array
+          items:
+            type: string
+      required: [latitude, longitude, count, severity, categories]
+
+    RecyclingCenter:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        address:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        acceptedMaterials:
+          type: array
+          items:
+            type: string
+        operatingHours:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        isOpen:
+          type: boolean
+      required: [id, name, address, latitude, longitude, acceptedMaterials, operatingHours, isOpen]
+
+    Announcement:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        eventDate:
+          type: string
+          format: date-time
+        organizer:
+          type: string
+        volunteersNeeded:
+          type: integer
+        volunteersSignedUp:
+          type: integer
+        imageUrl:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, title, description, location, eventDate, organizer, volunteersNeeded, volunteersSignedUp, createdAt]
+
+    CreateAnnouncementInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        eventDate:
+          type: string
+          format: date-time
+        organizer:
+          type: string
+        volunteersNeeded:
+          type: integer
+      required: [title, description, location, eventDate, organizer, volunteersNeeded]
+
+    RecyclingTip:
+      type: object
+      properties:
+        id:
+          type: integer
+        category:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        icon:
+          type: string
+      required: [id, category, title, content, icon]
+
+    StatsSummary:
+      type: object
+      properties:
+        totalReports:
+          type: integer
+        resolvedReports:
+          type: integer
+        pendingReports:
+          type: integer
+        inProgressReports:
+          type: integer
+        totalRecyclingCenters:
+          type: integer
+        activeCleanupDrives:
+          type: integer
+        totalVolunteers:
+          type: integer
+        resolutionRate:
+          type: number
+      required: [totalReports, resolvedReports, pendingReports, inProgressReports, totalRecyclingCenters, activeCleanupDrives, totalVolunteers, resolutionRate]
+
+    CategoryStat:
+      type: object
+      properties:
+        category:
+          type: string
+        count:
+          type: integer
+        percentage:
+          type: number
+      required: [category, count, percentage]
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [report_submitted, report_resolved, cleanup_announced, tip_added]
+        title:
+          type: string
+        description:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        userName:
+          type: string
+          nullable: true
+      required: [id, type, title, description, timestamp]
