@@ -192,17 +192,9 @@ Contributions are welcome.
 5. Open a Pull Request.
 
 
-
-# License
-
-This project is licensed under the MIT License.
-
-
-
 # Authors
 
 Developed using modern web technologies with AI-assisted development powered by OpenAI Codex and GPT-5.6.
-
 
 
 # Tagline
